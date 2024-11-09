@@ -1,3 +1,2 @@
 # Artificial-camera
-In this project enhance the functionality of camera like recording is start when someone or any object detected. Its help to reduce the waste of memory and easy to find something.
-It has many module like detection, color detection, movement sound etc
+In this project, I enhanced the camera's functionality so that recording starts when a person or object is detected. This helps reduce memory usage and makes it easier to find specific footage. The system includes several modules, such as motion detection, color detection, sound detection, and more
