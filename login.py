@@ -3,7 +3,7 @@ from tkinter import messagebox
 import pymysql
 import pymysql.cursors
 import subprocess
-import cv2
+import cv2,os
 import glob
 import numpy as np
 win=Tk()
@@ -13,52 +13,73 @@ win.title("Welcome to Login")
 win.resizable(False,False)
 #function for login
 def login():
-        '''cam = cv2.VideoCapture(0)
-        face_classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-        #file name read
-        list_of_files = glob.glob('C:\\Users\\Deepanshu\\Documents\\python\\project\\TrainingImage\\*') 
-        latest_file = max(list_of_files, key=os.path.getctime)
-        name=os.path.basename(latest_file)
-        name=os.path.splitext(name)[0]
-        name=int(name)
-        name=name+1
-      
-        while(True):
-                ret, img = cam.read()
-                gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                faces = face_classifier.detectMultiScale(img,1.3,5)
+    try:
+        cam = cv2.VideoCapture(0) 
+        face_classifier = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
-                for (x,y,w,h) in faces:
-                        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)        
-                #saving the captured face in the dataset folder TrainingImage
-                        cv2.imwrite("TrainingImage\ "+ str(name) + ".jpg", img[y:y+h,x:x+w])
-                #display the frame
-                #cv2.imshow('frame',img)
-                #wait for 100 miliseconds 
-                if cv2.waitKey(5)  :
-                        break
-                # break if the sample number is morethan 100
-                # elif sampleNum>=10:
-                # break
+        if not cam.isOpened():
+            messagebox.showerror("Error", "Camera not detected!")
+            return
+
+        # Get latest image file
+        training_path = 'C:\\Users\\Deepanshu\\Documents\\python\\project\\TrainingImage\\'
+        list_of_files = glob.glob(training_path + '*') 
+
+        if list_of_files:
+            latest_file = max(list_of_files, key=os.path.getctime)
+            name = os.path.splitext(os.path.basename(latest_file))[0]
+            name = int(name) + 1
+        else:
+            name = 1  # First image name
+
+        face_detected = False
+        while not face_detected:
+            ret, img = cam.read()
+            if not ret:
+                messagebox.showerror("Error", "Failed to capture image!")
+                return
+
+            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            faces = face_classifier.detectMultiScale(gray, 1.3, 5)
+
+            for (x, y, w, h) in faces:
+                face_detected = True
+                cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                face_img_path = os.path.join(training_path, f"{name}.jpg")
+                cv2.imwrite(face_img_path, img[y:y+h, x:x+w])
+
+            cv2.imshow('Face Capture', img)
+            if cv2.waitKey(100) & 0xFF == ord('q'):
+                break
+
         cam.release()
-        cv2.destroyAllWindows()''' 
+        cv2.destroyAllWindows()
 
-        #intialise the variable
-        user=text.get()
-        passwor=text2.get()
-        #connect to the datadase
-        conn=pymysql.connect(host='localhost',user='root',password='Ankita@18',db='deepanshu')
-        a=conn.cursor()
-        a.execute("select * from login where Username='"+user+"'and Password='"+passwor+"'")
-        result=a.fetchall()
-        count=a.rowcount
-        if(count>0):
+        # User Input (Make sure text & text2 are defined in your UI)
+        user = text.get()
+        password = text2.get()
+
+        # Database Connection
+        try:
+            conn = pymysql.connect(host='localhost', user='root', password='*******', db='deepanshu')
+            a = conn.cursor()
+            a.execute("SELECT * FROM login WHERE Username=%s AND Password=%s", (user, password))
+            result = a.fetchall()
+            count = a.rowcount
+
+            if count > 0:
+                messagebox.showinfo("Success", "Login Successful!")
                 win.destroy()
                 subprocess.run(["python", "login2.py"])
+            else:
+                messagebox.showerror("Error", "Invalid Credentials! Try again.")
 
-        else:
-                messagebox.showerror("message","Not login")
+            conn.close()
+        except pymysql.MySQLError as e:
+            messagebox.showerror("Database Error", str(e))
 
+    except Exception as e:
+        messagebox.showerror("Error", str(e))
         
     
 def forgot():
@@ -74,7 +95,7 @@ def forgot():
                 #check both password are same
                 if(new==old):
                         #connect to the datadase
-                        conn = pymysql.connect(host='localhost',user='root',password='Ankita@18',db='deepanshu')
+                        conn = pymysql.connect(host='localhost',user='root',password='*********',db='deepanshu')
                         mydb=conn.cursor()
                         mydb.execute("select * from login where Username = '"+name+"'")
                         mydb.execute("update fun set Password='"+new+"' where Username = '"+name+"'")
@@ -113,7 +134,7 @@ def sign():
                 password=tx3.get()
                 #connect to the datadase
                 try:
-                        conn = pymysql.connect(host='localhost',user='root',password='Ankita@18',db='deepanshu')
+                        conn = pymysql.connect(host='localhost',user='root',password='*********',db='deepanshu')
                         mydb=conn.cursor()
                         mydb.execute("insert into login(Username,Password) values('"+username+"','"+password+"')")
                         conn.commit()
